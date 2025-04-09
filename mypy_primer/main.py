@@ -24,7 +24,7 @@ from mypy_primer.type_checker import (
     setup_knot,
     setup_typeshed,
 )
-from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
+from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
 T = TypeVar("T")
 
@@ -76,8 +76,8 @@ async def setup_new_and_old_pyright(
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_pyright), "--version"], output=True),
-            run([str(old_pyright), "--version"], output=True),
+            run(["node", str(new_pyright), "--version"], output=True),
+            run(["node", str(old_pyright), "--version"], output=True),
         )
         debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
         debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
@@ -353,8 +353,9 @@ async def bisect() -> None:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
 
         if ARGS.type_checker == "pyright":
-            await run(["npm", "run", "install:all"], cwd=repo_dir)
-            await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
+            npm = get_npm()
+            await run([npm, "run", "install:all"], cwd=repo_dir)
+            await run([npm, "run", "build"], cwd=repo_dir / "packages" / "pyright")
 
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
         results: dict[str, TypeCheckResult] = dict(results_fut)
