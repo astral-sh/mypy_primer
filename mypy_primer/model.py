@@ -319,6 +319,14 @@ class Project:
             cwd=ctx.get().projects_dir / self.name,
             env=env,
         )
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError("Red Knot exited with code 2 which may indicate an internal problem (e.g. IO error)")
+            else:
+                raise RuntimeError("Red Knot did not exit with code 0, 1 or 2. Panic?")
+
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{knot} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
